@@ -21,9 +21,11 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.config.RobotConfig;
 import java.util.function.DoubleSupplier;
+import prime.control.Controls;
 
-public class Drivetrain extends SubsystemBase {
+public class Drivetrain extends SubsystemBase implements AutoCloseable {
 
+  // Container for robot configuration
   private RobotConfig m_config;
 
   // Gyro and Kinematics
@@ -56,14 +58,15 @@ public class Drivetrain extends SubsystemBase {
     m_kinematics =
       new SwerveDriveKinematics(
         // in CCW order from FL to FR
-        m_config.FrontLeftSwerveModuleConfig.ModuleLocation,
-        m_config.RearLeftSwerveModuleConfig.ModuleLocation,
-        m_config.RearRightSwerveModuleConfig.ModuleLocation,
-        m_config.FrontRightSwerveModuleConfig.ModuleLocation
+        m_config.FrontLeftSwerveModule.getModuleLocation(),
+        m_config.RearLeftSwerveModule.getModuleLocation(),
+        m_config.RearRightSwerveModule.getModuleLocation(),
+        m_config.FrontRightSwerveModule.getModuleLocation()
       );
 
     // Create swerve modules and ODO
     createSwerveModulesAndOdometry();
+    m_inHighGear = config.Drivetrain.StartInHighGear;
 
     // Configure field
     m_field = new Field2d();
@@ -72,9 +75,9 @@ public class Drivetrain extends SubsystemBase {
     // Configure snap-to PID
     m_snapToRotationController =
       new PIDController(
-        m_config.Drivetrain.SnapToPidConstants.kP,
-        m_config.Drivetrain.SnapToPidConstants.kI,
-        m_config.Drivetrain.SnapToPidConstants.kD,
+        m_config.Drivetrain.SnapToPID[0],
+        m_config.Drivetrain.SnapToPID[1],
+        m_config.Drivetrain.SnapToPID[2],
         0.02
       );
     m_snapToRotationController.enableContinuousInput(-Math.PI, Math.PI);
@@ -113,11 +116,30 @@ public class Drivetrain extends SubsystemBase {
    * Creates the swerve modules and starts odometry
    */
   private void createSwerveModulesAndOdometry() {
-    m_frontLeftModule = new SwerveModule(m_config.FrontLeftSwerveModuleConfig);
+    m_frontLeftModule =
+      new SwerveModule(
+        m_config.FrontLeftSwerveModule,
+        m_config.Drivetrain.DrivePID,
+        m_config.Drivetrain.SteeringPID
+      );
     m_frontRightModule =
-      new SwerveModule(m_config.FrontRightSwerveModuleConfig);
-    m_rearLeftModule = new SwerveModule(m_config.RearLeftSwerveModuleConfig);
-    m_rearRightModule = new SwerveModule(m_config.RearRightSwerveModuleConfig);
+      new SwerveModule(
+        m_config.FrontRightSwerveModule,
+        m_config.Drivetrain.DrivePID,
+        m_config.Drivetrain.SteeringPID
+      );
+    m_rearLeftModule =
+      new SwerveModule(
+        m_config.RearLeftSwerveModule,
+        m_config.Drivetrain.DrivePID,
+        m_config.Drivetrain.SteeringPID
+      );
+    m_rearRightModule =
+      new SwerveModule(
+        m_config.RearRightSwerveModule,
+        m_config.Drivetrain.DrivePID,
+        m_config.Drivetrain.SteeringPID
+      );
 
     m_odometry =
       new SwerveDriveOdometry(
@@ -150,8 +172,7 @@ public class Drivetrain extends SubsystemBase {
   }
 
   /**
-   * Drives using cartesian speeds + a rotation speed
-   *
+   * Drives the robot using cartesian speeds, scaled to the max speed of the robot in meters per second
    * @param strafeXMetersPerSecond
    * @param forwardMetersPerSecond
    * @param rotationRadiansPerSecond
@@ -191,12 +212,6 @@ public class Drivetrain extends SubsystemBase {
         );
     }
 
-    m_lastSnapToCalculatedPIDOutput =
-      m_snapToRotationController.calculate(
-        m_gyro.getRotation2d().getRadians(),
-        desiredChassisSpeeds.omegaRadiansPerSecond
-      );
-
     if (m_snapToGyroEnabled) {
       m_lastSnapToCalculatedPIDOutput =
         m_snapToRotationController.calculate(
@@ -213,7 +228,6 @@ public class Drivetrain extends SubsystemBase {
 
   /**
    * Drives using an input ChassisSpeeds
-   *
    * @param desiredChassisSpeeds
    */
   public void drive(ChassisSpeeds desiredChassisSpeeds) {
@@ -243,7 +257,6 @@ public class Drivetrain extends SubsystemBase {
 
   /**
    * Feeds the swerve modules each a desired state.
-   *
    * @param swerveModuleStates The new states of the modules in CCW order from FL
    *                           to FR
    */
@@ -320,7 +333,6 @@ public class Drivetrain extends SubsystemBase {
 
   /**
    * Gets the module positions as an array ordered in standard CCW order
-   *
    * @return
    */
   public SwerveModulePosition[] getModulePositions() {
@@ -401,10 +413,20 @@ public class Drivetrain extends SubsystemBase {
     boolean fieldRelative
   ) {
     return this.run(() -> {
-        var strafeX = MathUtil.applyDeadband(xSupplier.getAsDouble(), 0.15);
-        var forwardY = MathUtil.applyDeadband(ySupplier.getAsDouble(), 0.15);
-        var rotation = MathUtil.applyDeadband(
+        var strafeX = Controls.cubicScaledDeadband(
+          xSupplier.getAsDouble(),
+          0.15,
+          0.1
+        );
+
+        var forwardY = Controls.cubicScaledDeadband(
+          ySupplier.getAsDouble(),
+          0.15,
+          0.1
+        );
+        var rotation = Controls.cubicScaledDeadband(
           rotationSupplier.getAsDouble(),
+          0.1,
           0.1
         );
 
@@ -469,5 +491,24 @@ public class Drivetrain extends SubsystemBase {
         m_snapToRotationController.setSetpoint(angle);
       });
   }
+
   //#endregion
+
+  @Override
+  public void close() throws Exception {
+    DriverStation.reportWarning(">> Drivetrain closing...", false);
+
+    // close all physical resources
+    m_gyro.close();
+    m_frontLeftModule.close();
+    m_rearLeftModule.close();
+    m_rearRightModule.close();
+    m_frontRightModule.close();
+    m_snapToRotationController.close();
+
+    // release memory resources
+    m_kinematics = null;
+    m_odometry = null;
+    m_field = null;
+  }
 }

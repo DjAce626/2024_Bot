@@ -1,7 +1,5 @@
 package frc.robot.config;
 
-import com.pathplanner.lib.util.PIDConstants;
-
 public class DrivetrainConfig {
 
   public double TrackWidthMeters = 0;
@@ -16,7 +14,12 @@ public class DrivetrainConfig {
   public double LowGearScalar = 0.5;
   public boolean StartInHighGear = false;
 
-  public PIDConstants SnapToPidConstants = new PIDConstants(0, 0, 0);
+  public double[] DrivePID = new double[] { 0, 0, 0 };
+  public double[] SteeringPID = new double[] { 0, 0, 0 };
+  public double[] SnapToPID = new double[] { 0, 0, 0 };
+
+  public double DriveDeadband = 0;
+  public double DeadbandCurveWeight = 0;
 
   public DrivetrainConfig(
     double trackWidthMeters,
@@ -28,7 +31,11 @@ public class DrivetrainConfig {
     double maxAngularSpeedRadians,
     double lowGearScalar,
     boolean startInHighGear,
-    PIDConstants snapToPidConstants
+    double[] drivePID,
+    double[] steeringPID,
+    double[] snapToPID,
+    double driveDeadband,
+    double deadbandCurveWeight
   ) {
     TrackWidthMeters = trackWidthMeters;
     WheelBaseMeters = wheelBaseMeters;
@@ -43,6 +50,11 @@ public class DrivetrainConfig {
     LowGearScalar = lowGearScalar;
     StartInHighGear = startInHighGear;
 
-    SnapToPidConstants = snapToPidConstants;
+    DrivePID = drivePID;
+    SteeringPID = steeringPID;
+    SnapToPID = snapToPID;
+
+    DriveDeadband = driveDeadband;
+    DeadbandCurveWeight = deadbandCurveWeight;
   }
 }

@@ -2,8 +2,8 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.MagnetSensorConfigs;
+import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.VelocityDutyCycle;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -16,14 +16,16 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.config.SwerveModuleConfig;
+import prime.movers.LazyCANSparkMax;
 import prime.utilities.CTREConverter;
 
-public class SwerveModule extends SubsystemBase {
+public class SwerveModule extends SubsystemBase implements AutoCloseable {
 
-  private CANSparkMax m_SteeringMotor;
+  private LazyCANSparkMax m_SteeringMotor;
   private TalonFX m_driveMotor;
   private CANcoder m_encoder;
   private SwerveModuleConfig m_config;
@@ -33,7 +35,7 @@ public class SwerveModule extends SubsystemBase {
   private final VelocityVoltage m_voltageVelocity = new VelocityVoltage(
     0,
     0,
-    true,
+    false,
     0,
     0,
     false,
@@ -41,23 +43,30 @@ public class SwerveModule extends SubsystemBase {
     false
   );
 
-  public SwerveModule(SwerveModuleConfig moduleConfig) {
+  public SwerveModule(
+    SwerveModuleConfig moduleConfig,
+    double[] drivePID,
+    double[] steeringPID
+  ) {
     m_config = moduleConfig;
     setName(m_config.ModuleName);
 
     // Set up the steering motor
-    setupSteeringMotor();
+    setupSteeringMotor(steeringPID);
 
     // Set up the drive motor
-    setupDriveMotor();
+    setupDriveMotor(drivePID);
 
     // Set up our encoder
     setupCanCoder();
   }
 
-  private void setupSteeringMotor() {
+  /**
+   * Sets up the steering motor and PID controller
+   */
+  private void setupSteeringMotor(double[] pid) {
     m_SteeringMotor =
-      new CANSparkMax(m_config.SteeringMotorCanId, MotorType.kBrushless);
+      new LazyCANSparkMax(m_config.SteeringMotorCanId, MotorType.kBrushless);
     m_SteeringMotor.restoreFactoryDefaults();
 
     m_SteeringMotor.setSmartCurrentLimit(100, 80);
@@ -66,27 +75,22 @@ public class SwerveModule extends SubsystemBase {
     m_SteeringMotor.setInverted(m_config.SteerInverted); // CCW inversion
 
     // Create a PID controller to calculate steering motor output
-    m_steeringPidController =
-      new PIDController(
-        m_config.SteeringPidConstants.kP,
-        m_config.SteeringPidConstants.kI,
-        m_config.SteeringPidConstants.kD,
-        0.020
-      );
+    m_steeringPidController = new PIDController(pid[0], pid[1], pid[2], 0.020);
     m_steeringPidController.enableContinuousInput(0, 1);
     m_steeringPidController.setTolerance((1 / 360.0) * 5);
   }
 
-  public void setupDriveMotor() {
+  /**
+   * Sets up the drive motor
+   */
+  public void setupDriveMotor(double[] pid) {
     m_driveMotor = new TalonFX(m_config.DriveMotorCanId);
     m_driveMotor.clearStickyFaults();
     m_driveMotor.getConfigurator().apply(new TalonFXConfiguration());
 
     TalonFXConfiguration driveMotorConfig = new TalonFXConfiguration();
-    // driveMotorConfig.ClosedLoopRamps =
-    //   m_config.DriveClosedLoopRampConfiguration;
-    driveMotorConfig.Slot0 = m_config.DriveSlot0Configuration;
-    // driveMotorConfig.CurrentLimits = m_config.DriveCurrentLimitConfiguration;
+    driveMotorConfig.Slot0 =
+      new Slot0Configs().withKP(pid[0]).withKI(pid[1]).withKD(pid[2]);
     driveMotorConfig.Voltage.PeakForwardVoltage = 12;
     driveMotorConfig.Voltage.PeakReverseVoltage = -12;
 
@@ -95,6 +99,9 @@ public class SwerveModule extends SubsystemBase {
     m_driveMotor.setInverted(m_config.DriveInverted); // Clockwise Inversion
   }
 
+  /**
+   * Sets up the CANCoder
+   */
   public void setupCanCoder() {
     m_encoder = new CANcoder(m_config.CANCoderCanId);
     m_encoder.clearStickyFaults();
@@ -190,6 +197,7 @@ public class SwerveModule extends SubsystemBase {
       getEncoderHeading(),
       setpoint
     );
+
     m_SteeringMotor.set(MathUtil.clamp(newOutput, -1, 1));
   }
 
@@ -270,5 +278,17 @@ public class SwerveModule extends SubsystemBase {
    */
   protected Rotation2d getEncoderHeadingRotation2d() {
     return Rotation2d.fromRotations(getEncoderHeading());
+  }
+
+  @Override
+  public void close() {
+    DriverStation.reportWarning(
+      ">> Module " + getName() + " closing...",
+      false
+    );
+    m_SteeringMotor.close();
+    m_driveMotor.close();
+    m_encoder.close();
+    m_steeringPidController.close();
   }
 }
