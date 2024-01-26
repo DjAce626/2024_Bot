@@ -44,34 +44,32 @@ public class Robot extends TimedRobot {
     // );
 
     m_robotContainer = new RobotContainer(RobotConfig.getDefault());
-
     // Set up autonomous selection
-    m_autoChooser = new SendableChooser<String>();
-    m_autoChooser.setDefaultOption("Default", m_defaultAutoName);
+    // m_autoChooser = new SendableChooser<String>();
+    // m_autoChooser.setDefaultOption("Default", m_defaultAutoName);
   }
 
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
+    // // Update the selected config name
+    // var selectedConfig = m_configChooser.getSelected();
+    // if (m_selectedConfigName != selectedConfig) {
+    //   // A new config was selected, stop all commands and reconfigure the robot
+    //   CommandScheduler.getInstance().cancelAll();
+    //   DriverStation.reportWarning(
+    //     ">> Switching to new config \"" + selectedConfig + "\"",
+    //     false
+    //   );
 
-    // Update the selected config name
-    var selectedConfig = m_configChooser.getSelected();
-    if (m_selectedConfigName != selectedConfig) {
-      // A new config was selected, stop all commands and reconfigure the robot
-      CommandScheduler.getInstance().cancelAll();
-      DriverStation.reportWarning(
-        ">> Switching to new config \"" + selectedConfig + "\"",
-        false
-      );
+    //   m_selectedConfigName = selectedConfig;
+    //   var config = PrimeConfigurator.mapConfigFromJsonFile(
+    //     RobotConfig.class,
+    //     m_selectedConfigName
+    //   );
 
-      m_selectedConfigName = selectedConfig;
-      var config = PrimeConfigurator.mapConfigFromJsonFile(
-        RobotConfig.class,
-        m_selectedConfigName
-      );
-
-      m_robotContainer.reconfigure(config);
-    }
+    //   m_robotContainer.reconfigure(config);
+    // }
   }
 
   @Override
