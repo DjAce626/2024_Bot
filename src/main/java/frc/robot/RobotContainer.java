@@ -8,7 +8,6 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.path.PathPlannerPath;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.config.RobotConfig;
 import frc.robot.subsystems.Drivetrain;
 import prime.control.Controls;
@@ -21,12 +20,7 @@ public class RobotContainer {
   public PrimeXboxController DriverController;
 
   public RobotContainer(RobotConfig config) {
-    m_config = config;
-
-    Drivetrain = new Drivetrain(m_config);
-    DriverController = new PrimeXboxController(Controls.DRIVER_PORT);
-
-    configureBindings();
+    reconfigure(config);
   }
 
   public void reconfigure(RobotConfig config) {
@@ -51,6 +45,8 @@ public class RobotContainer {
   }
 
   private void configureBindings() {
+    DriverController = new PrimeXboxController(Controls.DRIVER_PORT);
+
     Drivetrain.setDefaultCommand(
       Drivetrain.defaultDriveCommand(
         DriverController.getLeftStickYSupplier(
@@ -81,9 +77,6 @@ public class RobotContainer {
 
     DriverController.button(Controls.A).onTrue(Drivetrain.resetGyroCommand());
 
-    // DriverController
-    //   .button(Controls.B)
-    //   .onTrue(Drivetrain.toggleShifterCommand());
     DriverController
       .button(Controls.X)
       .onTrue(Drivetrain.toggleShifterCommand());
