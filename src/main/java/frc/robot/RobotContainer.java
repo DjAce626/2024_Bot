@@ -81,11 +81,12 @@ public class RobotContainer {
       .button(Controls.X)
       .onTrue(Drivetrain.toggleShifterCommand());
   }
-  // public Command getAutonomousCommand() {
-  //   // // Load the path you want to follow using its name in the GUI
-  //   // PathPlannerPath path = PathPlannerPath.fromPathFile("Example Path");
 
-  //   // // Create a path following command using AutoBuilder. This will also trigger event markers.
-  //   // return AutoBuilder.followPathWithEvents(path);
-  // }
+  public Command getAutonomousCommand() {
+    // Load the path you want to follow using its name in the GUI
+    PathPlannerPath path = PathPlannerPath.fromPathFile("Example Path");
+
+    // Create a path following command using AutoBuilder. This will also trigger event markers.
+    return AutoBuilder.followPathWithEvents(path);
+  }
 }
