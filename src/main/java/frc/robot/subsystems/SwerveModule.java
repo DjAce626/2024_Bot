@@ -167,7 +167,7 @@ public class SwerveModule extends SubsystemBase {
     );
   }
 
-  public SwerveModuleState getState() {
+  public SwerveModuleState getModuleState() {
     return new SwerveModuleState(
       getVelocityMetersPerSecond(),
       getEncoderHeadingRotation2d()
