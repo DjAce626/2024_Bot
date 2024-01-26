@@ -167,6 +167,13 @@ public class SwerveModule extends SubsystemBase {
     );
   }
 
+  public SwerveModuleState getState() {
+    return new SwerveModuleState(
+      getVelocityMetersPerSecond(),
+      getEncoderHeadingRotation2d()
+    );
+  }
+
   /**
    * Sets the setpoint of the steering PID to the new angle provided
    *
@@ -207,16 +214,16 @@ public class SwerveModule extends SubsystemBase {
    */
   public void setDesiredState(SwerveModuleState desiredState) {
     // TODO: Optimize the state to avoid turning wheels further than 90 degrees
-    // var encoderRotation = getEncoderHeadingRotation2d();
-    // desiredState = SwerveModuleState.optimize(desiredState, encoderRotation);
-    // SmartDashboard.putNumber(
-    //   "Swerve/" + getName() + "/Optimized Angle",
-    //   desiredState.angle.getDegrees()
-    // );
-    // SmartDashboard.putNumber(
-    //   "Swerve/" + getName() + "/Optimized Speed",
-    //   desiredState.speedMetersPerSecond
-    // );
+    var encoderRotation = getEncoderHeadingRotation2d();
+    desiredState = SwerveModuleState.optimize(desiredState, encoderRotation);
+    SmartDashboard.putNumber(
+      "Swerve/" + getName() + "/Optimized Angle",
+      desiredState.angle.getDegrees()
+    );
+    SmartDashboard.putNumber(
+      "Swerve/" + getName() + "/Optimized Speed",
+      desiredState.speedMetersPerSecond
+    );
 
     SmartDashboard.putNumber(
       "Swerve/" + getName() + "/Desired Angle",
@@ -226,14 +233,15 @@ public class SwerveModule extends SubsystemBase {
       "Swerve/" + getName() + "/Desired Speed",
       desiredState.speedMetersPerSecond
     );
-
-    setDesiredSpeed(
-      CTREConverter.metersToRotations(
-        desiredState.speedMetersPerSecond,
-        m_config.DriveWheelCircumferenceMeters,
-        m_config.DriveGearRatio
-      )
-    );
+    if (m_steeringPidController.atSetpoint()) {
+      setDesiredSpeed(
+        CTREConverter.metersToRotations(
+          desiredState.speedMetersPerSecond,
+          m_config.DriveWheelCircumferenceMeters,
+          m_config.DriveGearRatio
+        )
+      );
+    }
 
     setDesiredAngle(desiredState.angle);
   }

@@ -160,18 +160,20 @@ public class Drivetrain extends SubsystemBase {
         );
     }
 
-    // _lastSnapToCalculatedPIDOutput =
-    // _snapToRotationController.calculate(Gyro.getRotation2d().getRadians(),
-    // desiredChassisSpeeds.omegaRadiansPerSecond);
+    m_lastSnapToCalculatedPIDOutput =
+      m_snapToRotationController.calculate(
+        m_gyro.getRotation2d().getRadians(),
+        desiredChassisSpeeds.omegaRadiansPerSecond
+      );
 
-    // if (m_snapToGyroEnabled) {
-    //   m_lastSnapToCalculatedPIDOutput =
-    //     m_snapToRotationController.calculate(
-    //       MathUtil.angleModulus(m_gyro.getRotation2d().getRadians())
-    //     );
-    //   desiredChassisSpeeds.omegaRadiansPerSecond =
-    //     -1 * m_lastSnapToCalculatedPIDOutput;
-    // }
+    if (m_snapToGyroEnabled) {
+      m_lastSnapToCalculatedPIDOutput =
+        m_snapToRotationController.calculate(
+          MathUtil.angleModulus(m_gyro.getRotation2d().getRadians())
+        );
+      desiredChassisSpeeds.omegaRadiansPerSecond =
+        -1 * m_lastSnapToCalculatedPIDOutput;
+    }
 
     m_lastRotationRadians = desiredChassisSpeeds.omegaRadiansPerSecond;
 

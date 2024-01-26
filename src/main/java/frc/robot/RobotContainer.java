@@ -53,8 +53,12 @@ public class RobotContainer {
       .onTrue(Drivetrain.driveWithSnapToAngleCommand(Math.toRadians(-90)));
 
     DriverController.button(Controls.A).onTrue(Drivetrain.resetGyroCommand());
+
+    // DriverController
+    //   .button(Controls.B)
+    //   .onTrue(Drivetrain.toggleShifterCommand());
     DriverController
-      .button(Controls.B)
+      .button(Controls.X)
       .onTrue(Drivetrain.toggleShifterCommand());
   }
 
