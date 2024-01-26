@@ -27,23 +27,23 @@ public class Robot extends TimedRobot {
   @Override
   public void robotInit() {
     // Set up configuration selection
-    m_configChooser = new SendableChooser<String>();
-    m_configChooser.setDefaultOption("Default", m_defaultConfigName);
-    for (var configName : PrimeConfigurator.getAvailableConfigsInDeploy()) {
-      m_configChooser.addOption(configName, configName);
-    }
+    // m_configChooser = new SendableChooser<String>();
+    // m_configChooser.setDefaultOption("Default", m_defaultConfigName);
+    // for (var configName : PrimeConfigurator.getAvailableConfigsInDeploy()) {
+    //   m_configChooser.addOption(configName, configName);
+    // }
 
-    DriverStation.reportWarning(
-      ">> Selected config \"" + m_selectedConfigName + "\"",
-      false
-    );
+    // DriverStation.reportWarning(
+    //   ">> Selected config \"" + m_selectedConfigName + "\"",
+    //   false
+    // );
 
-    var config = PrimeConfigurator.mapConfigFromJsonFile(
-      RobotConfig.class,
-      m_defaultConfigName
-    );
+    // var config = PrimeConfigurator.mapConfigFromJsonFile(
+    //   RobotConfig.class,
+    //   m_defaultConfigName
+    // );
 
-    m_robotContainer = new RobotContainer(config);
+    m_robotContainer = new RobotContainer(RobotConfig.getDefault());
 
     // Set up autonomous selection
     m_autoChooser = new SendableChooser<String>();

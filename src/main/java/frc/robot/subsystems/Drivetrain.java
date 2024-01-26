@@ -21,7 +21,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.config.RobotConfig;
 import java.util.function.DoubleSupplier;
-import prime.control.Controls;
 
 public class Drivetrain extends SubsystemBase implements AutoCloseable {
 
@@ -35,7 +34,6 @@ public class Drivetrain extends SubsystemBase implements AutoCloseable {
 
   // Swerve Modules, in CCW order from FL to FR
   SwerveModule m_frontLeftModule, m_rearLeftModule, m_rearRightModule, m_frontRightModule;
-  public SwerveModule[] m_swerveModules;
   public SwerveModulePosition[] m_swerveModulePositions = new SwerveModulePosition[4];
 
   // Odometry
@@ -93,8 +91,8 @@ public class Drivetrain extends SubsystemBase implements AutoCloseable {
       new HolonomicPathFollowerConfig( // HolonomicPathFollowerConfig, this should likely live in your Constants class
         new PIDConstants(0, 0, 0), // Translation PID constants
         new PIDConstants(0, 0, 0), // Rotation PID constants
-        4.5, // Max module speed, in m/s
-        0.4, // Drive base radius in meters. Distance from robot center to furthest module.
+        m_config.Drivetrain.MaxSpeedMetersPerSecond, // Max module speed, in m/s
+        m_config.Drivetrain.WheelBaseCircumferenceMeters / Math.PI / 2, // Drive base radius in meters. Distance from robot center to furthest module.
         new ReplanningConfig() // Default path replanning config. See the API for the options here
       ),
       () -> {
@@ -153,15 +151,6 @@ public class Drivetrain extends SubsystemBase implements AutoCloseable {
         },
         new Pose2d(0, 0, Rotation2d.fromDegrees(0))
       );
-
-    // in CCW order from FL to FR
-    m_swerveModules =
-      new SwerveModule[] {
-        m_frontLeftModule,
-        m_rearLeftModule,
-        m_rearRightModule,
-        m_frontLeftModule,
-      };
   }
 
   /**
@@ -231,19 +220,6 @@ public class Drivetrain extends SubsystemBase implements AutoCloseable {
    * @param desiredChassisSpeeds
    */
   public void drive(ChassisSpeeds desiredChassisSpeeds) {
-    SmartDashboard.putNumber(
-      "Drive/DesiredSpeedX",
-      desiredChassisSpeeds.vxMetersPerSecond
-    );
-    SmartDashboard.putNumber(
-      "Drive/DesiredSpeedY",
-      desiredChassisSpeeds.vyMetersPerSecond
-    );
-    SmartDashboard.putNumber(
-      "Drive/DesiredSpeedRotation",
-      desiredChassisSpeeds.omegaRadiansPerSecond
-    );
-
     var swerveModuleStates = m_kinematics.toSwerveModuleStates(
       desiredChassisSpeeds
     );
@@ -413,22 +389,9 @@ public class Drivetrain extends SubsystemBase implements AutoCloseable {
     boolean fieldRelative
   ) {
     return this.run(() -> {
-        var strafeX = Controls.cubicScaledDeadband(
-          xSupplier.getAsDouble(),
-          0.15,
-          0.1
-        );
-
-        var forwardY = Controls.cubicScaledDeadband(
-          ySupplier.getAsDouble(),
-          0.15,
-          0.1
-        );
-        var rotation = Controls.cubicScaledDeadband(
-          rotationSupplier.getAsDouble(),
-          0.1,
-          0.1
-        );
+        var strafeX = xSupplier.getAsDouble();
+        var forwardY = ySupplier.getAsDouble();
+        var rotation = rotationSupplier.getAsDouble();
 
         strafeX *= m_config.Drivetrain.MaxSpeedMetersPerSecond;
         forwardY *= m_config.Drivetrain.MaxSpeedMetersPerSecond;
