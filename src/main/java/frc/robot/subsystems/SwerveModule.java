@@ -167,6 +167,13 @@ public class SwerveModule extends SubsystemBase {
     );
   }
 
+  public SwerveModuleState getState() {
+    return new SwerveModuleState(
+      getVelocityMetersPerSecond(),
+      getEncoderHeadingRotation2d()
+    );
+  }
+
   /**
    * Sets the setpoint of the steering PID to the new angle provided
    *
@@ -226,14 +233,15 @@ public class SwerveModule extends SubsystemBase {
       "Swerve/" + getName() + "/Desired Speed",
       desiredState.speedMetersPerSecond
     );
-
-    setDesiredSpeed(
-      CTREConverter.metersToRotations(
-        desiredState.speedMetersPerSecond,
-        m_config.DriveWheelCircumferenceMeters,
-        m_config.DriveGearRatio
-      )
-    );
+    if (m_steeringPidController.atSetpoint()) {
+      setDesiredSpeed(
+        CTREConverter.metersToRotations(
+          desiredState.speedMetersPerSecond,
+          m_config.DriveWheelCircumferenceMeters,
+          m_config.DriveGearRatio
+        )
+      );
+    }
 
     setDesiredAngle(desiredState.angle);
   }
