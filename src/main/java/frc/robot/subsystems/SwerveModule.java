@@ -131,6 +131,12 @@ public class SwerveModule extends SubsystemBase {
     //   "Swerve/" + getName() + "/Drive output",
     //   m_driveMotor.get()
     // );
+
+    SmartDashboard.putNumber(
+      "/Measured Velocity",
+      getModuleState().speedMetersPerSecond
+    );
+
     SmartDashboard.putNumber(
       "Swerve/" + getName() + "/Steering output",
       m_SteeringMotor.get()

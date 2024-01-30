@@ -86,4 +86,6 @@ public class RobotConfig {
       -Drivetrain.WheelBaseMeters / 2
     )
   );
+
+  public static final int shoulderMotorCANID = 0;
 }
