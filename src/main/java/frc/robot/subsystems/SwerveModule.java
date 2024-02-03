@@ -21,6 +21,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.config.SwerveModuleConfig;
 import java.util.Map;
@@ -43,6 +44,12 @@ public class SwerveModule extends SubsystemBase implements AutoCloseable {
   private TalonFX m_driveMotor;
   private CANcoder m_encoder;
   private PIDController m_steeringPidController;
+
+  public double actualAngle;
+  public double desiredAngle;
+  public double inputInv;
+  public double distNonInv;
+  public double distToInv;
 
   /* Start at velocity 0, no feed forward, use slot 0 */
   private final VelocityVoltage m_voltageVelocity = new VelocityVoltage(
@@ -253,11 +260,11 @@ public class SwerveModule extends SubsystemBase implements AutoCloseable {
   }
 
   public SwerveModuleState optimize(SwerveModuleState desiredState) {
-    double actualAngle = getEncoderHeading();
-    double desiredAngle = desiredState.angle.getDegrees();
-    double inputInv = (desiredAngle + 180) % 360;
-    double distNonInv = Math.abs(actualAngle - desiredAngle);
-    double distToInv = Math.abs(actualAngle - inputInv);
+    actualAngle = getEncoderHeading();
+    desiredAngle = desiredState.angle.getDegrees();
+    inputInv = (desiredAngle + 180) % 360;
+    distNonInv = Math.abs(actualAngle - desiredAngle);
+    distToInv = Math.abs(actualAngle - inputInv);
     SwerveModuleState optimizedState;
 
     if (distToInv < distNonInv) {
@@ -340,6 +347,8 @@ public class SwerveModule extends SubsystemBase implements AutoCloseable {
       m_driveMotor.getMotorVoltage().getValueAsDouble()
     );
     d_moduleHeadingEntry.setDouble(getEncoderHeadingRotation2d().getDegrees());
+
+    SmartDashboard.putNumber(getName(), getEncoderHeading());
   }
 
   @Override

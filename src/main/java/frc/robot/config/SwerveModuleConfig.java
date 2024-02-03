@@ -6,6 +6,8 @@ import edu.wpi.first.math.geometry.Translation2d;
 
 public class SwerveModuleConfig {
 
+  public static final String SwerveModule = null;
+
   public String ModuleName = "DefaultModuleName";
 
   public int DriveMotorCanId;
