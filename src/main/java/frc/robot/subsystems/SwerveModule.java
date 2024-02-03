@@ -6,14 +6,17 @@ import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.CANcoder;
+import com.ctre.phoenix6.hardware.Pigeon2;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.AbsoluteSensorRangeValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.pathplanner.lib.auto.AutoBuilder;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.networktables.GenericEntry;
@@ -21,7 +24,9 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.config.RobotConfig;
 import frc.robot.config.SwerveModuleConfig;
 import java.util.Map;
 import prime.control.PrimePIDConstants;
@@ -82,7 +87,7 @@ public class SwerveModule extends SubsystemBase implements AutoCloseable {
    */
   private void setupDashboard() {
     d_moduleTab = Shuffleboard.getTab(getName() + " Module");
-    d_driveVelocityEntry =
+    d_driveVelocityEntry = 
       d_moduleTab
         .add("Velocity (MPS)", 0)
         .withWidget(BuiltInWidgets.kDial)
@@ -99,6 +104,8 @@ public class SwerveModule extends SubsystemBase implements AutoCloseable {
         .withWidget(BuiltInWidgets.kGyro)
         .withProperties(Map.of("major tick spacing", 15, "starting angle", 0))
         .getEntry();
+
+    
   }
 
   /**
